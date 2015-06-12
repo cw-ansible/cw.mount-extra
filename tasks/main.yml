@@ -19,7 +19,6 @@
     group: '{{ item.group | default("root") }}'
     mode:  '{{ item.mode | default("644") }}'
   with_items:
-    - src: etc/init/mount-extra.conf
     - src: etc/init.d/mount-extra
       mode: '0755'
     - src: usr/local/sbin/mount-extra
