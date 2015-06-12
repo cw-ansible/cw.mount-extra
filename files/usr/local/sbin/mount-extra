@@ -1,0 +1,112 @@
+#!/usr/bin/python
+
+import os
+import re
+import subprocess
+import pipes
+import sys
+
+
+def parse_fstab(file="/etc/mount-extra.cfg"):
+    '''
+Parse fstab-like FILE and return a list of splited items.
+'''
+    re_comment = re.compile('^\s*#')
+    re_empty = re.compile('^\s*$')
+    re_ws = re.compile('\s+')
+    
+    ret = []
+    
+    if not os.path.exists(file):
+        return ret
+
+    for line in open(file, 'r').readlines():
+        if re_comment.match(line):
+            continue
+        if re_empty.match(line):
+            continue
+        line = line.rstrip()
+        ret.append(re_ws.split(line))
+    return ret
+    
+def find_disk_by (by, regex, mpoint, dir='/dev/disk/by-'):
+    '''Get all disk from BY type from DIR matching REGEX.
+
+Return a list of tuples: (dev, mountpoint).
+
+BY should be "id", "label" or anything that can be found in /deb/disks/by-*.
+'''
+    regex = re.compile(regex)
+    ret = []
+    dir = dir + by
+    for file in os.listdir(dir):
+        match = regex.search(file)
+        if match:
+            path = regex.sub(mpoint, file)
+            ret.append(('%s/%s' % (dir, file), path))
+    return ret
+
+
+def get_mounted():
+    lines = open('/etc/mtab', 'r').readlines()
+    ret = []
+    for line in lines:
+        items = line.split(' ')
+        ret.append(items[1])
+    return ret
+
+def mount_items(items):
+    '''Mount parsed ITEMS.
+
+
+Each line of the fstab (by default: /etc/mount-extra.cfg) is:
+
+
+TYPE:REGEX   MOUNTPOINT  TYPE   OPTIONS
+
+TYPE: can be one of id, label, partlabel, partuuid, path, uuid
+REGEX: is a regex to be match againt files found in /dev/disks/by-TYPE
+MOUNTPOINT: is the mountpoit for found partition. It can contains some backrefs.
+TYPE: The filesystem type
+OTIONS: mount options.
+
+
+Example:
+
+id=.*(db_\d{2})$ /srv/mysql/\1 xfs rw,noatime
+label=backup_mysql /var/lib/mysql-backup xfs rw,noatime
+'''
+    rc = 0
+    fstab = parse_fstab(file='/etc/fstab')
+    for item in items:
+        (type, regex) = item[0].split('=')
+        for mount in find_disk_by(type, regex, item[1]):
+            if  mount[1] in get_mounted():
+                print 'Skipping mounted point %s' % mount[1]
+                continue
+            if not os.path.exists(mount[1]):
+                os.makedirs(mount[1])
+            cmd = ["mount", "-o", item[3], "-t", item[2], mount[0], mount[1]]
+            cmd_str = ' '.join(pipes.quote(arg) for arg in cmd)
+            print('Mounting %s to %s' % (mount[0], mount[1]))
+            proc = subprocess.Popen(cmd, stdout=False, stderr=False)
+            proc.wait()
+            if proc.returncode:
+                sys.stderr.write('Cannot mount %s to %s\n' % (mount[0], mount[1]))
+                rc += 1
+            else:
+                found_in_fstab = False
+                for f in fstab:
+                    if f[0] == mount[0] and f[1] == mount[1]:
+                        found_in_fstab = True
+                        break
+                if not found_in_fstab:
+                    fstab_fh = open('/etc/fstab', 'a+')
+                    fstab_fh.write('# Added by mount-extra from /etc/mount-extra.cfg\n')
+                    fstab_fh.write('%s\n' % '\t'.join([mount[0], mount[1]] + item[2:]))
+    sys.exit(rc)
+
+
+
+tab=parse_fstab()
+mount_items(tab)

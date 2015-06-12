@@ -1,0 +1,34 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          mount-extra
+# Required-Start:    mount-extra
+# Required-Stop:
+# Should-Start:      
+# Default-Start:     S
+# Default-Stop:      
+# Short-Description: Mount extra file system ad defined in /etc/mount-extra.cfg
+# Description:       Read extra file systems to mount in /etc/mount-extra.cfg.
+#                    Create all inexistant mount points before mounting devices.
+### END INIT INFO
+
+. /lib/init/vars.sh
+. /lib/lsb/init-functions
+
+case "$1" in
+    start|""|restart|reload|force-reload)
+	[ "$VERBOSE" != no ] && log_action_begin_msg "Mounting extra file systems"
+	/usr/local/sbin/sr-mount
+	ES=$?
+	[ "$VERBOSE" != no ] && log_action_end_msg $ES
+	exit $ES
+	;;
+  stop)
+	# No-op
+	;;
+  *)
+	echo "Usage: $1 [start|stop|restart|reload|force-reload]" >&2
+	exit 3
+	;;
+esac
+
+:

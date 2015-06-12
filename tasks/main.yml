@@ -1,0 +1,32 @@
+---
+
+- name: create mount-extra fstabs
+  mount:
+    name: '{{ item.name }}'
+    fstab: '/etc/default/mount-extra'
+    src: '{{ item.src }}'
+    fstype: '{{ item.fstype }}'
+    opts: '{{ item.opts }}'
+    state: '{{ item.state|default("present") }}'
+  with_items: mount_extra_fstab
+  when: mount_extra_fstab is defined
+
+- name: install mount-extra init task
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest | default("/" + item.src) }}'
+    owner: '{{ item.owner | default("root") }}'
+    group: '{{ item.group | default("root") }}'
+    mode:  '{{ item.mode | default("644") }}'
+  with_items:
+    - src: etc/init/mount-extra.conf
+    - src: etc/init.d/mount-extra
+      mode: '0755'
+    - src: usr/local/sbin/mount-extra
+      mode: '0755'
+
+- name: activate mount-extra
+  command:
+    update-rc.d mount-extra start 1 2 .
+    creates=/etc/rcS.d/S12mount-extra
+
