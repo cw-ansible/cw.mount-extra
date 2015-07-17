@@ -1,7 +1,7 @@
 #! /bin/sh
 ### BEGIN INIT INFO
 # Provides:          mount-extra
-# Required-Start:    mount-extra
+# Required-Start:    
 # Required-Stop:
 # Should-Start:      
 # Default-Start:     S
@@ -17,7 +17,7 @@
 case "$1" in
     start|""|restart|reload|force-reload)
 	[ "$VERBOSE" != no ] && log_action_begin_msg "Mounting extra file systems"
-	/usr/local/sbin/sr-mount
+	/usr/local/sbin/mount-extra
 	ES=$?
 	[ "$VERBOSE" != no ] && log_action_end_msg $ES
 	exit $ES
