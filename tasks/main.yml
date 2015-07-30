@@ -3,7 +3,7 @@
 - name: create mount-extra fstabs
   mount:
     name: '{{ item.name }}'
-    fstab: '/etc/default/mount-extra'
+    fstab: '/etc/mount-extra.cfg'
     src: '{{ item.src }}'
     fstype: '{{ item.fstype }}'
     opts: '{{ item.opts }}'
@@ -26,6 +26,6 @@
 
 - name: activate mount-extra
   command:
-    update-rc.d mount-extra start 1 2 .
-    creates=/etc/rcS.d/S12mount-extra
+    update-rc.d mount-extra defaults
+    creates=/etc/rc2.d/S19mount-extra
 

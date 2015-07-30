@@ -1,11 +1,10 @@
 #! /bin/sh
 ### BEGIN INIT INFO
 # Provides:          mount-extra
-# Required-Start:    
-# Required-Stop:
-# Should-Start:      
-# Default-Start:     S
-# Default-Stop:      
+# Required-Start:    $syslog
+# Required-Stop:     $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
 # Short-Description: Mount extra file system ad defined in /etc/mount-extra.cfg
 # Description:       Read extra file systems to mount in /etc/mount-extra.cfg.
 #                    Create all inexistant mount points before mounting devices.
